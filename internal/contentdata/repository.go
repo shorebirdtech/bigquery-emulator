@@ -455,6 +455,12 @@ func (r *Repository) queryParameterValueToGoValue(ptype *bigqueryv2.QueryParamet
 		}
 		return st, nil
 	}
+	// Array elements and struct fields arrive here with their declared type,
+	// and are JSON strings like top-level scalars, so they need the same
+	// coercion or an ARRAY<INT64> of "1", "2" is analysed as ARRAY<STRING>.
+	if ptype != nil {
+		return coerceScalarParameterValue(value.Value, ptype.Type), nil
+	}
 	return value.Value, nil
 }
 

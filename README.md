@@ -1,3 +1,24 @@
+# BigQuery Emulator (Shorebird fork)
+
+This fork exists for one bug and should be deleted once upstream fixes it.
+
+It is upstream `v0.8.1` plus one fix: array elements and struct fields of
+query parameters are converted to their declared type, as top-level
+scalars already are. Without it, `WHERE id IN UNNEST(@ids)` with an
+`ARRAY<INT64>` parameter fails with "No matching signature for operator IN
+UNNEST for argument types: INT64, ARRAY<STRING>". Upstream PRs
+goccy/bigquery-emulator#516 and #525 fix the same bug. The Dockerfile pins
+`golang:1.25`, since `v0.8.1` no longer builds with the latest Go image.
+
+It is published as `ghcr.io/shorebirdtech/bigquery-emulator:0.8.1-shorebird.1`
+(by `.github/workflows/shorebird-image.yml`, on a `v*-shorebird.*` tag) and
+used by the local stack's `docker-compose.yml` in shorebirdtech/_shorebird.
+We do not track upstream. **When an upstream release includes the fix, point
+`docker-compose.yml` back at `ghcr.io/goccy/bigquery-emulator` and archive
+this repository.**
+
+---
+
 # BigQuery Emulator
 
 [![build and test](https://github.com/goccy/bigquery-emulator/actions/workflows/test.yml/badge.svg)](https://github.com/goccy/bigquery-emulator/actions/workflows/test.yml)
