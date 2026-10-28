@@ -1,0 +1,7 @@
+source "https://rubygems.org"
+
+gem "google-cloud-bigquery", "1.50.0"
+# The multi_json this resolves to (1.19.1) calls JSON.parse with two
+# positional arguments, which json 3 rejects. Drop the cap once the resolved
+# multi_json passes its options as keywords.
+gem "json", "< 3"

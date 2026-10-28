@@ -26,9 +26,8 @@ FROM ${BASE} AS ruby-deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ruby ruby-dev build-essential ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-COPY clients/ruby/gems.txt /tmp/gems.txt
-RUN gem install --no-document --install-dir /deps/ruby \
-        $(awk -F: '{print $1, "-v", $2}' /tmp/gems.txt)
+COPY clients/ruby/Gemfile /tmp/Gemfile
+RUN gem install --no-document --install-dir /deps/ruby --file /tmp/Gemfile
 
 # ---------------------------------------------------------------------------
 # PHP client dependencies
