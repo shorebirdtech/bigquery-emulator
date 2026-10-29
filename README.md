@@ -2,13 +2,13 @@
 
 This fork exists for one bug and should be deleted once upstream fixes it.
 
-It is upstream `v0.8.1` plus one fix: array elements and struct fields of
+It is upstream `v0.8.1` plus one fix and a grpc bump. The fix: array elements and struct fields of
 query parameters are converted to their declared type, as top-level
 scalars already are. Without it, `WHERE id IN UNNEST(@ids)` with an
 `ARRAY<INT64>` parameter fails with "No matching signature for operator IN
 UNNEST for argument types: INT64, ARRAY<STRING>". Upstream PRs
-goccy/bigquery-emulator#516 and #525 fix the same bug. It also bumps grpc
-to v1.85.0, since `v0.8.1`'s grpc does not build with Go 1.27.
+goccy/bigquery-emulator#516 and #525 fix the same bug. The bump, grpc
+v1.85.0, is the first grpc that builds with Go 1.27.
 
 It is published as `ghcr.io/shorebirdtech/bigquery-emulator:0.8.1-shorebird.1`
 (by `.github/workflows/shorebird-image.yml`, on a `v*-shorebird.*` tag) and
