@@ -1,6 +1,6 @@
 ARG DEBIAN_VERSION=bookworm
 
-FROM --platform=$BUILDPLATFORM golang:1.25-${DEBIAN_VERSION} AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-${DEBIAN_VERSION} AS builder
 
 # Provided by buildx for every target platform.
 ARG TARGETOS
