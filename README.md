@@ -7,8 +7,8 @@ query parameters are converted to their declared type, as top-level
 scalars already are. Without it, `WHERE id IN UNNEST(@ids)` with an
 `ARRAY<INT64>` parameter fails with "No matching signature for operator IN
 UNNEST for argument types: INT64, ARRAY<STRING>". Upstream PRs
-goccy/bigquery-emulator#516 and #525 fix the same bug. The Dockerfile pins
-`golang:1.25`, since `v0.8.1` no longer builds with the latest Go image.
+goccy/bigquery-emulator#516 and #525 fix the same bug. It also bumps grpc
+to v1.85.0, since `v0.8.1`'s grpc does not build with Go 1.27.
 
 It is published as `ghcr.io/shorebirdtech/bigquery-emulator:0.8.1-shorebird.1`
 (by `.github/workflows/shorebird-image.yml`, on a `v*-shorebird.*` tag) and
