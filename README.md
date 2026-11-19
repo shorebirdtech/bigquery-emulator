@@ -1,19 +1,18 @@
 # BigQuery Emulator (Shorebird fork)
 
-This fork exists for one bug and should be deleted once upstream fixes it.
+This fork exists for two bugs and should be deleted once upstream fixes them.
 
-It is upstream `v0.8.1` plus one fix and a grpc bump. The fix: array elements and struct fields of
-query parameters are converted to their declared type, as top-level
-scalars already are. Without it, `WHERE id IN UNNEST(@ids)` with an
-`ARRAY<INT64>` parameter fails with "No matching signature for operator IN
-UNNEST for argument types: INT64, ARRAY<STRING>". Upstream PRs
-goccy/bigquery-emulator#516 and #525 fix the same bug. The bump, grpc
-v1.85.0, is the first grpc that builds with Go 1.27.
+It is upstream `v0.8.1` plus two fixes and a grpc bump:
 
-It is published as `ghcr.io/shorebirdtech/bigquery-emulator:0.8.1-shorebird.1`
+- Array elements and struct fields of query parameters are converted to their declared type, as top-level scalars already are. Without it, `WHERE id IN UNNEST(@ids)` with an `ARRAY<INT64>` parameter fails with "No matching signature for operator IN UNNEST for argument types: INT64, ARRAY<STRING>". Upstream PRs goccy/bigquery-emulator#516 and #525 fix the same bug.
+- A project no longer loads its jobs on every request. `jobs.query` records a job per query, and each request under `/projects/{id}` used to decode every job recorded so far, so query latency grew with the number of queries answered until clients timed out. Upstream issue goccy/bigquery-emulator#512 reports the symptom.
+
+The bump, grpc v1.85.0, is the first grpc that builds with Go 1.27.
+
+It is published as `ghcr.io/shorebirdtech/bigquery-emulator:0.8.1-shorebird.N`
 (by `.github/workflows/shorebird-image.yml`, on a `v*-shorebird.*` tag) and
 used by the local stack's `docker-compose.yml` in shorebirdtech/_shorebird.
-We do not track upstream. **When an upstream release includes the fix, point
+We do not track upstream. **When an upstream release includes both fixes, point
 `docker-compose.yml` back at `ghcr.io/goccy/bigquery-emulator` and archive
 this repository.**
 

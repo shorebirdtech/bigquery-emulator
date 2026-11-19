@@ -369,7 +369,11 @@ func (h *uploadContentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	jobID := uploadID[0]
-	job := project.Job(jobID)
+	job, err := project.Job(ctx, jobID)
+	if err != nil {
+		errorResponse(ctx, w, errInternalError(err.Error()))
+		return
+	}
 	if job == nil {
 		errorResponse(ctx, w, errNotFound(fmt.Sprintf("upload job %s is not found", jobID)))
 		return
@@ -1951,8 +1955,12 @@ type jobsListRequest struct {
 }
 
 func (h *jobsListHandler) Handle(ctx context.Context, r *jobsListRequest) (*bigqueryv2.JobList, error) {
+	projectJobs, err := r.project.Jobs(ctx)
+	if err != nil {
+		return nil, err
+	}
 	jobs := []*bigqueryv2.JobListJobs{}
-	for _, job := range r.project.Jobs() {
+	for _, job := range projectJobs {
 		content := job.Content()
 		jobs = append(jobs, &bigqueryv2.JobListJobs{
 			Id:           content.Id,
