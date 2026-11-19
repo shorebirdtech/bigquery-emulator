@@ -234,7 +234,11 @@ func withJobMiddleware() func(http.Handler) http.Handler {
 			jobID, exists := jobIDFromParams(params)
 			if exists {
 				project := projectFromContext(ctx)
-				job := project.Job(jobID)
+				job, err := project.Job(ctx, jobID)
+				if err != nil {
+					errorResponse(ctx, w, errInternalError(err.Error()))
+					return
+				}
 				if job == nil {
 					errorResponse(ctx, w, errNotFound(fmt.Sprintf("job %s is not found", jobID)))
 					return

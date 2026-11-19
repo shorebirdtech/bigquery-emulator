@@ -11,8 +11,6 @@ type Project struct {
 	ID         string
 	datasets   []*Dataset
 	datasetMap map[string]*Dataset
-	jobs       []*Job
-	jobMap     map[string]*Job
 	mu         sync.RWMutex
 	repo       *Repository
 }
@@ -25,24 +23,16 @@ func (p *Project) DatasetIDs() []string {
 	return ids
 }
 
-func (p *Project) JobIDs() []string {
-	ids := make([]string, len(p.jobs))
-	for i := 0; i < len(p.jobs); i++ {
-		ids[i] = p.jobs[i].ID
-	}
-	return ids
+// Job reads one job from the store. Jobs are not held on the Project:
+// jobs.query records one job per query, and every request loads its
+// Project, so carrying them made each request decode every job recorded
+// so far (goccy/bigquery-emulator#512).
+func (p *Project) Job(ctx context.Context, id string) (*Job, error) {
+	return p.repo.FindJob(ctx, p.ID, id)
 }
 
-func (p *Project) Job(id string) *Job {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.jobMap[id]
-}
-
-func (p *Project) Jobs() []*Job {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.jobs
+func (p *Project) Jobs(ctx context.Context) ([]*Job, error) {
+	return p.repo.FindJobsInProject(ctx, p.ID)
 }
 
 func (p *Project) Dataset(id string) *Dataset {
@@ -108,62 +98,36 @@ func (p *Project) DeleteDataset(ctx context.Context, tx *sql.Tx, id string) erro
 }
 
 func (p *Project) AddJob(ctx context.Context, tx *sql.Tx, job *Job) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if _, exists := p.jobMap[job.ID]; exists {
+	existing, err := p.repo.findJobs(ctx, tx, p.ID, []string{job.ID})
+	if err != nil {
+		return err
+	}
+	if len(existing) != 0 {
 		return fmt.Errorf("job %s is already created", job.ID)
 	}
-	if err := job.Insert(ctx, tx); err != nil {
-		return err
-	}
-	p.jobs = append(p.jobs, job)
-	p.jobMap[job.ID] = job
-	if err := p.repo.UpdateProject(ctx, tx, p); err != nil {
-		return err
-	}
-	return nil
+	return job.Insert(ctx, tx)
 }
 
 func (p *Project) DeleteJob(ctx context.Context, tx *sql.Tx, id string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	job, exists := p.jobMap[id]
-	if !exists {
+	jobs, err := p.repo.findJobs(ctx, tx, p.ID, []string{id})
+	if err != nil {
+		return err
+	}
+	if len(jobs) == 0 {
 		return fmt.Errorf("job '%s' is not found in project '%s'", id, p.ID)
 	}
-	if err := job.Delete(ctx, tx); err != nil {
-		return err
-	}
-	newJobs := make([]*Job, 0, len(p.jobs))
-	for _, job := range p.jobs {
-		if job.ID == id {
-			continue
-		}
-		newJobs = append(newJobs, job)
-	}
-	p.jobs = newJobs
-	delete(p.jobMap, id)
-	if err := p.repo.UpdateProject(ctx, tx, p); err != nil {
-		return err
-	}
-	return nil
+	return jobs[0].Delete(ctx, tx)
 }
 
-func NewProject(repo *Repository, id string, datasets []*Dataset, jobs []*Job) *Project {
+func NewProject(repo *Repository, id string, datasets []*Dataset) *Project {
 	datasetMap := map[string]*Dataset{}
 	for _, dataset := range datasets {
 		datasetMap[dataset.ID] = dataset
 	}
-	jobMap := map[string]*Job{}
-	for _, job := range jobs {
-		jobMap[job.ID] = job
-	}
 	return &Project{
 		ID:         id,
 		datasets:   datasets,
-		jobs:       jobs,
 		datasetMap: datasetMap,
-		jobMap:     jobMap,
 		repo:       repo,
 	}
 }
